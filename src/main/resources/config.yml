@@ -1,0 +1,5 @@
+db:
+  login: postgres
+  password: admin
+  address: localhost:5432
+  database: test
