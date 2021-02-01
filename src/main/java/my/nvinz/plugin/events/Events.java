@@ -105,7 +105,7 @@ public class Events implements Listener {
             // 1. При убийстве зомби на его месте появляется оцелот.
             Zombie zombie = (Zombie) event.getEntity();
 
-            if (zombie.getKiller() instanceof Player) {
+            if (zombie.getKiller() != null) {
                 Ocelot ocelot = (Ocelot) zombie.getWorld().spawnEntity(zombie.getLocation(), EntityType.OCELOT);
 
                 // 2. Имя оцелота должно состоять из 5 случайных символов
