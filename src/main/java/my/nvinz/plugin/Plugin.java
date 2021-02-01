@@ -13,13 +13,12 @@ import java.util.Objects;
 public class Plugin extends JavaPlugin {
 
     private ApplicationContext context;
-    private ProtocolManager protocolManager;
     private DBService dbService;
 
+    @Override
     public void onEnable() {
         context = new AnnotationConfigApplicationContext(SpringConfig.class);
         dbService = context.getBean(DBService.class);
-        protocolManager = context.getBean(ProtocolManager.class);
         registerEvents();
         loadConfig();
     }

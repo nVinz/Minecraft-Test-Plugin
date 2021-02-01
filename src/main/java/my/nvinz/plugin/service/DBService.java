@@ -2,6 +2,7 @@ package my.nvinz.plugin.service;
 
 import java.sql.*;
 import java.time.LocalDate;
+import java.util.Objects;
 
 public class DBService {
 
@@ -11,8 +12,7 @@ public class DBService {
 
     private Connection createConnection() {
         try {
-            Connection connection = DriverManager.getConnection(url, userName, userPassword);
-            return connection;
+            return DriverManager.getConnection(url, userName, userPassword);
         } catch (SQLException e) {
             e.printStackTrace();
             return null;
@@ -23,14 +23,13 @@ public class DBService {
     public void saveKill(String table, String playerName, String ocelotName) {
         // В отдельном потоке чтобы не грузить основной, но все равно заметно
         Runnable execution = () -> {
-            Connection connection = createConnection();
-            try {
+            try(Connection connection = createConnection()) {
+                Objects.requireNonNull(connection, "Unable to create DB connection: " + url);
                 PreparedStatement statement = connection.prepareStatement("INSERT INTO " + table + " (player_name, ocelot_name, date) VALUES (?, ?, ?);");
                 statement.setString(1, playerName);
                 statement.setString(2, ocelotName);
                 statement.setDate(3, Date.valueOf(LocalDate.now()));
                 statement.execute();
-                connection.close();
             } catch (SQLException e) {
                 e.printStackTrace();
             }

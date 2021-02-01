@@ -50,8 +50,8 @@ public class Events implements Listener {
             for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
                 protocolManager.sendServerPacket(onlinePlayer, packet);
             }
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
+        } catch (InvocationTargetException exception) {
+            throw new RuntimeException(String.format("Cannot send packet %s,\nerror: %s", packet, exception));
         }
     }
 
@@ -62,8 +62,8 @@ public class Events implements Listener {
                 biConsumer.accept(packet, onlinePlayer);
                 protocolManager.sendServerPacket(onlinePlayer, packet);
             }
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
+        } catch (InvocationTargetException exception) {
+            throw new RuntimeException(String.format("Cannot send packet %s,\nerror: %s", packet, exception));
         }
     }
 
