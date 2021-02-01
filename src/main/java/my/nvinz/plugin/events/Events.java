@@ -104,18 +104,21 @@ public class Events implements Listener {
         if (entity instanceof Zombie) {
             // 1. При убийстве зомби на его месте появляется оцелот.
             Zombie zombie = (Zombie) event.getEntity();
-            Ocelot ocelot = (Ocelot) zombie.getWorld().spawnEntity(zombie.getLocation(), EntityType.OCELOT);
 
-            // 2. Имя оцелота должно состоять из 5 случайных символов
-            // Генерация имени и сохранение в списке
-            String name = stringService.generateRandomString(5);
-            ocelot.setCustomName(name);
+            if (zombie.getKiller() instanceof Player) {
+                Ocelot ocelot = (Ocelot) zombie.getWorld().spawnEntity(zombie.getLocation(), EntityType.OCELOT);
 
-            // Сохранение имени оцелота в лист
-            entityService.addOcelotName(name);
+                // 2. Имя оцелота должно состоять из 5 случайных символов
+                // Генерация имени и сохранение в списке
+                String name = stringService.generateRandomString(5);
+                ocelot.setCustomName(name);
 
-            // 4. Оцелот должен не убегать от игрока, а атаковать его
-            ocelot.setTarget(zombie.getKiller());
+                // Сохранение имени оцелота в лист
+                entityService.addOcelotName(name);
+
+                // 4. Оцелот должен не убегать от игрока, а атаковать его
+                ocelot.setTarget(zombie.getKiller());
+            }
         }
         else if (entity instanceof Ocelot) {
             // Оцелот есть в листе
@@ -140,7 +143,7 @@ public class Events implements Listener {
                 // Пакет спавна стойки
                 PacketContainer spawnEntityPacket = protocolManager.createPacket(PacketType.Play.Server.SPAWN_ENTITY);
                 spawnEntityPacket.getIntegers().write(0, id);
-                spawnEntityPacket.getIntegers().write(6, 78); // В документаии индекс 0
+                spawnEntityPacket.getIntegers().write(6, 78); // В документации индекс 0
                 spawnEntityPacket.getDoubles().write(0, entity.getLocation().getX());
                 spawnEntityPacket.getDoubles().write(1, entity.getLocation().getY() - 1.2);
                 spawnEntityPacket.getDoubles().write(2, entity.getLocation().getZ());
@@ -153,7 +156,7 @@ public class Events implements Listener {
                 // Сохранение id стойки в мапу
                 entityService.addArmorStand(player.getName(), id);
 
-                
+
                 // Пакет с метадатой для стойки
                 PacketContainer entityMetadataPacket = protocolManager.createPacket(PacketType.Play.Server.ENTITY_METADATA);
                 entityMetadataPacket.getIntegers().write(0, id);
