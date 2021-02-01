@@ -1,8 +1,8 @@
-package plugin.utils;
+package my.nvinz.plugin.service;
 
 import java.util.Random;
 
-public class StringUtils {
+public class StringService {
 
     public String generateRandomString(final int length) {
         Random random = new Random();

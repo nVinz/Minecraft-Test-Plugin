@@ -1,11 +1,13 @@
-package plugin.utils;
+package my.nvinz.plugin.service;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class EntityUtils {
+public class EntityService {
 
+    // Имена созданных оцелотов
     private List<String> ocelotNames = new ArrayList<>();
+    // Мапа с игроками и всеми энтити, которые были созданы ими в пакетах, для их последующего удаления
     private Map<String, List<Integer>> armorStands = new ConcurrentHashMap<>();
 
     public void addOcelotName(String name) {
@@ -13,16 +15,17 @@ public class EntityUtils {
     }
 
     public void removeOcelotName(String name) {
-        if (ocelotNames.contains(name)) {
-            ocelotNames.remove(name);
-        }
+        ocelotNames.remove(name);
     }
 
     public int[] getArmorStandsByName(String playerName) {
+        if (armorStands.get(playerName) == null) {
+            return new int[0];
+        }
         List<Integer> armorStandsList = armorStands.get(playerName);
         int[] armorStandsIds = new int[armorStandsList.size()];
         for (int i = 0; i < armorStandsIds.length; i++) {
-            armorStandsIds[i] = armorStandsList.get(0);
+            armorStandsIds[i] = armorStandsList.get(i);
         }
         return armorStandsIds;
     }

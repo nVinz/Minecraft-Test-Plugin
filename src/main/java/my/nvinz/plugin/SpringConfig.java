@@ -1,30 +1,30 @@
-package plugin;
+package my.nvinz.plugin;
 
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
+import my.nvinz.plugin.service.EntityService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import plugin.utils.DBUtils;
-import plugin.utils.EntityUtils;
-import plugin.utils.StringUtils;
+import my.nvinz.plugin.service.DBService;
+import my.nvinz.plugin.service.StringService;
 
 @Configuration
 @ComponentScan
 public class SpringConfig {
 
     @Bean
-    public EntityUtils nameUtils() {
-        return new EntityUtils();
+    public EntityService entityService() {
+        return new EntityService();
     }
 
     @Bean
-    public StringUtils stringUtils() {
-        return new StringUtils();
+    public StringService stringService() {
+        return new StringService();
     }
 
     @Bean
-    public DBUtils dbUtils() {
+    public DBService dbService() {
         try {
             Class.forName("org.postgresql.Driver");
         }
@@ -33,7 +33,7 @@ public class SpringConfig {
             System.exit(1);
         }
 
-        return new DBUtils();
+        return new DBService();
     }
 
     @Bean

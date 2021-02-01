@@ -1,15 +1,15 @@
-package plugin;
+package my.nvinz.plugin;
 
-import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolManager;
-import com.comphenix.protocol.events.ListenerPriority;
-import com.comphenix.protocol.events.PacketAdapter;
-import com.comphenix.protocol.events.PacketEvent;
+import my.nvinz.plugin.events.Events;
+import org.bukkit.Bukkit;
+import org.bukkit.World;
+import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Entity;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import plugin.events.Events;
-import plugin.utils.DBUtils;
+import my.nvinz.plugin.service.DBService;
 
 import java.util.Map;
 import java.util.Objects;
@@ -18,15 +18,15 @@ public class Plugin extends JavaPlugin {
 
     private ApplicationContext context;
     private ProtocolManager protocolManager;
-    private DBUtils dbUtils;
+    private DBService dbService;
 
     public void onEnable() {
         context = new AnnotationConfigApplicationContext(SpringConfig.class);
 
-        dbUtils = context.getBean(DBUtils.class);
+        dbService = context.getBean(DBService.class);
 
         protocolManager = context.getBean(ProtocolManager.class);
-        protocolManager.addPacketListener(
+        /*protocolManager.addPacketListener(
                 new PacketAdapter(this, ListenerPriority.NORMAL, PacketType.Play.Server.SPAWN_ENTITY) {
                     @Override
                     public void onPacketSending(PacketEvent event) {
@@ -35,7 +35,7 @@ public class Plugin extends JavaPlugin {
                             System.out.println("Type " + Type);
                         }
                     }
-                });
+                });*/
 
         registerEvents();
         loadConfig();
@@ -58,16 +58,14 @@ public class Plugin extends JavaPlugin {
         try {
             getConfig().options().copyDefaults(true);
             try {
+                // Инициализация настроек БД
                 Map<String, Object> dbSettings = Objects.requireNonNull(getConfig().getConfigurationSection("db")).getValues(false);
-                System.out.println("dbSettings: " + dbSettings);
-
-                dbUtils.setUserName(String.valueOf(dbSettings.get("login")));
-                dbUtils.setUserPassword(String.valueOf(dbSettings.get("password")));
-                dbUtils.setUrl("jdbc:postgresql://" +
+                dbService.setUserName(String.valueOf(dbSettings.get("login")));
+                dbService.setUserPassword(String.valueOf(dbSettings.get("password")));
+                dbService.setUrl("jdbc:postgresql://" +
                         dbSettings.get("address") +
                         "/" +
                         dbSettings.get("database"));
-
             } catch (Exception e) {
                 getServer().getConsoleSender().sendMessage("Error reading DB settings: " + e.getMessage());
             }
