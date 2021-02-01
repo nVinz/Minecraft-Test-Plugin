@@ -148,11 +148,12 @@ public class Events implements Listener {
                 spawnEntityPacket.getShorts().writeDefaults();
 
                 // Рассылка пакета
-                sendPacketToAllPlayers(spawnEntityPacket, ((packetContainer, onlinePlayer) -> {
-                    // Сохранение id стойки в мапу
-                    entityService.addArmorStand(onlinePlayer.getName(), id);
-                }));
+                sendPacketToAllPlayers(spawnEntityPacket);
 
+                // Сохранение id стойки в мапу
+                entityService.addArmorStand(player.getName(), id);
+
+                
                 // Пакет с метадатой для стойки
                 PacketContainer entityMetadataPacket = protocolManager.createPacket(PacketType.Play.Server.ENTITY_METADATA);
                 entityMetadataPacket.getIntegers().write(0, id);
