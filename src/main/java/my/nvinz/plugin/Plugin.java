@@ -2,10 +2,6 @@ package my.nvinz.plugin;
 
 import com.comphenix.protocol.ProtocolManager;
 import my.nvinz.plugin.events.Events;
-import org.bukkit.Bukkit;
-import org.bukkit.World;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Entity;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -22,21 +18,8 @@ public class Plugin extends JavaPlugin {
 
     public void onEnable() {
         context = new AnnotationConfigApplicationContext(SpringConfig.class);
-
         dbService = context.getBean(DBService.class);
-
         protocolManager = context.getBean(ProtocolManager.class);
-        /*protocolManager.addPacketListener(
-                new PacketAdapter(this, ListenerPriority.NORMAL, PacketType.Play.Server.SPAWN_ENTITY) {
-                    @Override
-                    public void onPacketSending(PacketEvent event) {
-                        if (event.getPacketType() == PacketType.Play.Server.SPAWN_ENTITY) {
-                            int Type = event.getPacket().getIntegers().read(1);
-                            System.out.println("Type " + Type);
-                        }
-                    }
-                });*/
-
         registerEvents();
         loadConfig();
     }

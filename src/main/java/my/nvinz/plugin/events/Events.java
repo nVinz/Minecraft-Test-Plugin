@@ -24,6 +24,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 
 public class Events implements Listener {
 
@@ -31,7 +32,7 @@ public class Events implements Listener {
     private StringService stringService;
     private DBService dbService;
     private ProtocolManager protocolManager;
-    private Plugin plugin; // TODO отстой, переделать
+    private Plugin plugin;
 
     // Имя кожи, для проверки и получения ника в #onItemPickup
     private static String trophyName ="'s trophy";
@@ -42,6 +43,28 @@ public class Events implements Listener {
         this.dbService = context.getBean(DBService.class);
         this.protocolManager = context.getBean(ProtocolManager.class);
         this.plugin = plugin; // TODO отстой, переделать
+    }
+
+    private void sendPacketToAllPlayers(PacketContainer packet) {
+        try {
+            for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+                protocolManager.sendServerPacket(onlinePlayer, packet);
+            }
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Лямбда, потому что могу
+    private void sendPacketToAllPlayers(PacketContainer packet, BiConsumer<PacketContainer, Player> biConsumer) {
+        try {
+            for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+                biConsumer.accept(packet, onlinePlayer);
+                protocolManager.sendServerPacket(onlinePlayer, packet);
+            }
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
     }
 
     @EventHandler
@@ -64,15 +87,10 @@ public class Events implements Listener {
                     //destroyEntityPacket.getIntegers().write(0, entitiesToDestroy.length); // Говно в документации
                     destroyEntityPacket.getIntegerArrays().write(0, entitiesToDestroy);
 
-                    // TODO мб вынести в отдельный метод
-                    try {
-                        for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-                            protocolManager.sendServerPacket(onlinePlayer, destroyEntityPacket);
-                        }
-                    } catch (InvocationTargetException e) {
-                        throw new RuntimeException("Cannot send packet " + destroyEntityPacket, e);
-                    }
+                    // Рассылка пакета
+                    sendPacketToAllPlayers(destroyEntityPacket);
 
+                    // Удаление id стойки из мапы
                     entityService.removeArmorStands(playerName);
                 }
             }
@@ -92,17 +110,21 @@ public class Events implements Listener {
             // Генерация имени и сохранение в списке
             String name = stringService.generateRandomString(5);
             ocelot.setCustomName(name);
+
+            // Сохранение имени оцелота в лист
             entityService.addOcelotName(name);
 
             // 4. Оцелот должен не убегать от игрока, а атаковать его
             ocelot.setTarget(zombie.getKiller());
         }
         else if (entity instanceof Ocelot) {
+            // Оцелот есть в листе
             if (entityService.getOcelotNames().contains(entity.getCustomName())) {
+                // Удаление имени оцелота из листа
                 entityService.removeOcelotName(entity.getCustomName());
 
                 Player player = ((Ocelot) entity).getKiller();
-                int id = stringService.generateId(5);
+                int id = stringService.generateId(5); // id для стойки
 
                 // 5. При убийстве оцелота с него всегда должна падать одна кожа, над которой будет отображаться ник игрока.
                 ItemStack leather = new ItemStack(Material.LEATHER);
@@ -125,45 +147,32 @@ public class Events implements Listener {
                 spawnEntityPacket.getUUIDs().write(0, UUID.randomUUID());
                 spawnEntityPacket.getShorts().writeDefaults();
 
-                // TODO мб вынести в отдельный метод
-                try {
-                    for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-                        protocolManager.sendServerPacket(onlinePlayer, spawnEntityPacket);
-                    }
-                    // Сохранение всех id стоек в посланных пакетах
-                    entityService.addArmorStand(player.getName(), id);
-                } catch (InvocationTargetException e) {
-                    throw new RuntimeException("Cannot send packet " + spawnEntityPacket, e);
-                }
+                // Рассылка пакета
+                sendPacketToAllPlayers(spawnEntityPacket, ((packetContainer, onlinePlayer) -> {
+                    // Сохранение id стойки в мапу
+                    entityService.addArmorStand(onlinePlayer.getName(), id);
+                }));
 
-                // TODO мб вынести в отдельный метод
-                try {
-                    // Для каждого смотрящего игрока ник должен быть свой
-                    for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-                        // Пакет с метадатой для стойки
-                        PacketContainer entityMetadataPacket = protocolManager.createPacket(PacketType.Play.Server.ENTITY_METADATA);
-                        WrappedDataWatcher watcher = new WrappedDataWatcher(entity);
+                // Пакет с метадатой для стойки
+                PacketContainer entityMetadataPacket = protocolManager.createPacket(PacketType.Play.Server.ENTITY_METADATA);
+                entityMetadataPacket.getIntegers().write(0, id);
 
-                        // Custom name visible
-                        watcher.setObject(new WrappedDataWatcher.WrappedDataWatcherObject(3, WrappedDataWatcher.Registry.get(Boolean.class)), true);
-                        // Has no gravity
-                        watcher.setObject(new WrappedDataWatcher.WrappedDataWatcherObject(5, WrappedDataWatcher.Registry.get(Boolean.class)), true);
-                        // Invisible, ебля в битовые маски
-                        watcher.setObject(new WrappedDataWatcher.WrappedDataWatcherObject(0, WrappedDataWatcher.Registry.get(Byte.class)), (byte) 0x20);
-                        // Ник, но выглядит как залупа
-                        Optional<?> optionalName = Optional.of(WrappedChatComponent.fromChatMessage(onlinePlayer.getDisplayName())[0].getHandle());
-                        watcher.setObject(new WrappedDataWatcher.WrappedDataWatcherObject(2, WrappedDataWatcher.Registry.getChatComponentSerializer(true)), optionalName);
+                WrappedDataWatcher watcher = new WrappedDataWatcher();
+                // Custom name visible
+                watcher.setObject(new WrappedDataWatcher.WrappedDataWatcherObject(3, WrappedDataWatcher.Registry.get(Boolean.class)), true);
+                // Has no gravity
+                watcher.setObject(new WrappedDataWatcher.WrappedDataWatcherObject(5, WrappedDataWatcher.Registry.get(Boolean.class)), true);
+                // Invisible, ебля в битовые маски
+                watcher.setObject(new WrappedDataWatcher.WrappedDataWatcherObject(0, WrappedDataWatcher.Registry.get(Byte.class)), (byte) 0x20);
 
-                        entityMetadataPacket.getEntityModifier(entity.getWorld()).write(0, entity);
-                        entityMetadataPacket.getWatchableCollectionModifier().write(0, watcher.getWatchableObjects());
-                        entityMetadataPacket.getIntegers().write(0, id);
-
-                        protocolManager.sendServerPacket(onlinePlayer, entityMetadataPacket);
-                    }
-
-                } catch (InvocationTargetException e) {
-                    throw new RuntimeException("Cannot send packet ENTITY_METADATA", e);
-                }
+                // Рассылка пакета
+                // Для каждого смотрящего игрока ник должен быть свой
+                sendPacketToAllPlayers(entityMetadataPacket, (packet, onlinePlayer) -> {
+                    // Name, но выглядит как залупа
+                    Optional<?> optionalName = Optional.of(WrappedChatComponent.fromChatMessage(onlinePlayer.getDisplayName())[0].getHandle());
+                    watcher.setObject(new WrappedDataWatcher.WrappedDataWatcherObject(2, WrappedDataWatcher.Registry.getChatComponentSerializer(true)), optionalName);
+                    entityMetadataPacket.getWatchableCollectionModifier().write(0, watcher.getWatchableObjects());
+                });
 
                 // 3. При убийстве данного оцелота игроком в базу заносится запись
                 dbService.saveKill("kills", player.getName(), entity.getName());
