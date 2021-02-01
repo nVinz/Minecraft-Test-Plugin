@@ -4,4 +4,4 @@ main: my.nvinz.plugin.Plugin
 api-version: 1.13
 authors: [nVinz]
 description: Test Plugin
-depend: [ProtocolLib, PacketWrapper]
+depend: [ProtocolLib]

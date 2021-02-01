@@ -47,7 +47,7 @@ public class Plugin extends JavaPlugin {
 
     private void registerEvents(){
         try {
-            Events events = new Events(context);
+            Events events = new Events(context, this);
             getServer().getPluginManager().registerEvents(events, this);
         } catch (Exception e) {
             getServer().getConsoleSender().sendMessage("Error registering events: " + e.getMessage());
