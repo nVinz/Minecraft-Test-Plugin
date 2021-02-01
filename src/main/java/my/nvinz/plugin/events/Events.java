@@ -59,7 +59,7 @@ public class Events implements Listener {
 
                     // Чистый пакет по удалению стойки
                     PacketContainer destroyEntityPacket = protocolManager.createPacket(PacketType.Play.Server.ENTITY_DESTROY);
-                    //destroyEntityPacket.getIntegers().write(0, entitiesToDestroy.length);
+                    //destroyEntityPacket.getIntegers().write(0, entitiesToDestroy.length); // Говно в документации
                     destroyEntityPacket.getIntegerArrays().write(0, entitiesToDestroy);
 
                     try {
@@ -129,7 +129,7 @@ public class Events implements Listener {
                 // Чистый пакет спавна стойки
                 PacketContainer spawnEntityPacket = protocolManager.createPacket(PacketType.Play.Server.SPAWN_ENTITY);
                 spawnEntityPacket.getIntegers().write(0, id);
-                spawnEntityPacket.getIntegers().write(6, 78);
+                spawnEntityPacket.getIntegers().write(6, 78); // В документаии индекс 0
                 spawnEntityPacket.getDoubles().write(0, entity.getLocation().getX());
                 spawnEntityPacket.getDoubles().write(1, entity.getLocation().getY() - 1);
                 spawnEntityPacket.getDoubles().write(2, entity.getLocation().getZ());
@@ -147,7 +147,7 @@ public class Events implements Listener {
                 // Пакет во враппере, старая реализация
                 /*WrapperPlayServerSpawnEntity spawnEntity = new WrapperPlayServerSpawnEntity();
                 spawnEntity.setEntityID(id);
-                spawnEntity.setType(EntityType.ARMOR_STAND);
+                spawnEntity.setType(EntityType.ARMOR_STAND); // Вот эта срака сделано по разному в разных версиях
                 spawnEntity.setX(entity.getLocation().getX());
                 spawnEntity.setY(entity.getLocation().getY() - 1);
                 spawnEntity.setZ(entity.getLocation().getZ());
@@ -161,7 +161,8 @@ public class Events implements Listener {
                 try {
                     // Для каждого смотрящего игрока ник должен быть свой
                     for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-                        entityMetadataPacket.getStrings().write(0, onlinePlayer.getDisplayName());
+                        // Должен ставиться каким-то полем
+                        //entityMetadataPacket.getStrings().write(0, onlinePlayer.getDisplayName());
                         protocolManager.sendServerPacket(player, entityMetadataPacket);
                     }
 
@@ -170,8 +171,8 @@ public class Events implements Listener {
                             "Cannot send packet " + entityMetadataPacket, e);
                 }
 
-                // Пакет во враппере, тоже не работает
-                WrapperPlayServerEntityMetadata entityMetadata = new WrapperPlayServerEntityMetadata();
+                // Тот же пакет во враппере, тоже не работает, срет ошибки
+               /* WrapperPlayServerEntityMetadata entityMetadata = new WrapperPlayServerEntityMetadata();
                 entityMetadata.setEntityID(id);
 
                 WrappedDataWatcher dataWatcher = new WrappedDataWatcher(entityMetadata.getMetadata());
@@ -189,7 +190,7 @@ public class Events implements Listener {
                 for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
                     dataWatcher.setObject(nameValue, onlinePlayer.getDisplayName());
                     entityMetadata.sendPacket(player);
-                }
+                }*/
 
                 // 3. При убийстве данного оцелота игроком в базу заносится запись
                 dbService.saveKill("kills", player.getName(), entity.getName());

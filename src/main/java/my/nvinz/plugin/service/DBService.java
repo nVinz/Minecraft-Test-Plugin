@@ -21,8 +21,8 @@ public class DBService {
 
     // Супер долго
     public void saveKill(String table, String playerName, String ocelotName) {
-        // В отдельном потоке чтобы не грузить основной
-        Runnable executionThread = () -> {
+        // В отдельном потоке чтобы не грузить основной, но все равно заметно
+        Runnable execution = () -> {
             Connection connection = createConnection();
             try {
                 PreparedStatement statement = connection.prepareStatement("INSERT INTO " + table + " (player_name, ocelot_name, date) VALUES (?, ?, ?);");
@@ -35,7 +35,8 @@ public class DBService {
                 e.printStackTrace();
             }
         };
-        executionThread.run();
+        Thread executionThread = new Thread(execution);
+        executionThread.start();
     }
 
     public void setUserName(String userName) {
